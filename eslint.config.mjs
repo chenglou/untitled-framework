@@ -3,6 +3,9 @@ import tsParser from "@typescript-eslint/parser"
 
 export default [
   {
+    ignores: [".prettierrc.mjs", "eslint.config.mjs"],
+  },
+  {
     languageOptions: {
       parser: tsParser,
       ecmaVersion: 5,

@@ -1,9 +1,7 @@
 {
+  "include": ["src"],
   "compilerOptions": {
-    "lib": [
-      "ESNext",
-      "dom",
-    ],
+    "lib": ["ESNext", "dom"],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
@@ -31,6 +29,6 @@
     "noPropertyAccessFromIndexSignature": true, // don't disable this. This is our life-saver
     "allowSyntheticDefaultImports": true,
     "allowJs": false,
-    "forceConsistentCasingInFileNames": true,
+    "forceConsistentCasingInFileNames": true
   }
 }
