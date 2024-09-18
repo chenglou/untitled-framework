@@ -16,6 +16,11 @@ Check type & lint errors:
 bun check
 ```
 
+To test on iPhone:
+
+- Get your IP, e.g. from macOS' System Settings -> Wi-Fi -> Details (of your current connection)
+- Go to `http://<your-ip-here>:8888` on your phone
+
 ## Editor Configuration
 
 Any editor works, but VSCode and Cursor are recommended.
