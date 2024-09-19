@@ -6,6 +6,19 @@ What doesn't work:
 
 Input focus keyboard goes up white part below
 
+TODO: safe area, sometime doesn't work. Forgot why
+
+# Remove Browser UI
+
+When your app is bookmarked on home screen, here's how to remove the surrounding browser UI:
+
+- If you have a `manifest.json` file (see Manifest File section below), add `"display": "standalone"` to it (iOS only supports `"standalone"` and `"browser"`).
+- Otherwise, add `<meta name="apple-mobile-web-app-capable" content="yes" />` and `<meta name="mobile-web-app-capable" content="yes" />` to your HTML `<head>`.
+
+The latter way has a drawback: for the bookmarked app, the browser UI will only hide when the URL is what the user bookmarked. So if you change URL by navigating to another page (including navigating to some external site for e.g. login, payment), the UI will show up again. There's currently no solution to this.
+
+Addendum: with the latter `meta` tags method, technically, with our routing system, we can detect whether we're in bookmarked mode with `window.navigator.standalone === true`, and simply never switch URL again apart from the needed third-party URLs. Since our URL source of truth is our internal data structure and not the address bar, this doesn't break things (the one time we treat address bar as source of truth is when the user operates on it, which isn't possible in browser UI-less mode).
+
 # Status Bar
 
 `<meta name="theme-color" content="rgbColorHere">`. Works only in standalone display mode.
