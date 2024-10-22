@@ -29,7 +29,7 @@ export default [
       // if a rule isn't here, it's deemed unnecessary or too slow to run. Or maybe we missed one or a new useful one got introduced after this file was last updated
       "no-duplicate-case": "error",
       "@typescript-eslint/ban-ts-comment": ["error", {
-        "ts-expect-error": "allow-with-description",
+        "ts-expect-error": false,
       }],
       "no-unreachable": "error", // we use this instead of typescript's "allowUnreachableCode" (see tsconfig)
       "no-unused-expressions": "error", // good for cleaning up dead code
