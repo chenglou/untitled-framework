@@ -1,5 +1,5 @@
 {
-  "include": ["src"],
+  "include": ["src", ".prettierrc.mjs", "eslint.config.mjs"],
   "compilerOptions": {
     "lib": ["ESNext", "dom"],
     "target": "ESNext",
@@ -27,7 +27,7 @@
     "noFallthroughCasesInSwitch": true,
     "noPropertyAccessFromIndexSignature": true, // don't disable this. This is our life-saver
     "allowSyntheticDefaultImports": true,
-    "allowJs": false,
+    "checkJs": true, // type check the config files (prettier, eslint, etc.)
     "forceConsistentCasingInFileNames": true
   }
 }

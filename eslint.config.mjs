@@ -1,9 +1,10 @@
 import typescriptEslint from "@typescript-eslint/eslint-plugin"
 import tsParser from "@typescript-eslint/parser"
 
+/** @type {import("@typescript-eslint/utils").TSESLint.FlatConfig.ConfigArray} */
 export default [
   {
-    ignores: [".prettierrc.mjs", "eslint.config.mjs"],
+    ignores: [""],
   },
   {
     languageOptions: {
