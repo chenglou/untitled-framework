@@ -58,3 +58,51 @@ But the simple presence of the manifest file **always overrides** the tag `<meta
 Note that `start_url` and `display`\*, contrary to most others attributes, are only read once, when the webapp's bookmarked on home screen. Even if their value changes, the bookmark won't pick them up.
 
 \* This applies to `name` too (and its `meta` counterpart `apple-mobile-web-app-title` and `mobile-web-app-title`).
+
+# Events
+
+Traditional web frameworks are built around the assumption that user input events are:
+
+- sparse (happens only once in a while)
+- precise (e.g. a mouse click on some exact pixel position)
+- discrete (a click's a click; no input's _dragged_ out over time)
+- rarely concurrent (e.g. no other input happens while mouse is down)
+
+If these overly simplistic assumptions led to simpler event handling code, they'd have been more defensible. In reality, most apps' event handling code isn't even _that_ much simpler (usually a bunch of logic right inside the event callback, for meager convenience), while also leading to various unreadable antipatterns & bugs when the assumptions above are violated.
+
+One small change can fix all of the problems above _and_ lead to cleaner code organization at the same time. Whenever possible, in the event callbacks, _only_ retain the event that happened, then only call some render scheduler helper. The pattern roughly looks like this:
+
+```ts
+const events = {
+  pointerdown: null,
+  keydown: null,
+}
+window.addEventListener('pointerdown', (e) => {
+  events.pointerdown = e
+  scheduleRender()
+})
+window.addEventListener('keydown', (e) => {
+  events.keydown = e
+  scheduleRender()
+})
+
+function scheduleRender() {
+  if (renderAlreadyScheduled) return
+
+  // ...actual render logic here.
+  calculateSomeState(events.pointerdown, events.keydown)
+
+  // Then near the end:
+
+  // reset events after this render, or keep some if needed for the next frame
+  events.pointerdown = null
+  events.keydown = null
+}
+```
+
+The subtle difference is that instead of handling a particular event's logic inside its event callback, we record that it happened (here `events`), then we get to have holistic knowledge of all the events of this frame inside `scheduleRender`. For the cost of a tiny indirection, logic requiring knowing various event states at the same time can happen, enabling cool new UX (or simpler code for existing UX):
+
+- you get to order the importance of a key press relative to a concurrent (potentially conflicting) mouse click
+- resolve one tap while another finger is held down
+- Press a key while mouse's hovering over a special section for pro user actions
+- Two directional controls on a game pad composing into a new action
