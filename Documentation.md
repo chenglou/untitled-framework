@@ -48,7 +48,7 @@ The [Web Manifest](https://developer.mozilla.org/en-US/docs/Web/Manifest) `manif
 
 Many of the manifest attributes have their HTML `<meta ... />` tag counterparts. Whenever possible, we prefer the `meta` tags for 2 reasons:
 
-- Philosophically, we'd like to preserve as much runtime dynanism as possible (aka "late binding"). For example, maybe the theme color (status bar) varies depending on the page shown, or scroll position. Then we'd programmatically change that `meta` tag, which wouldn't be possible if we wrote a constant in `manifest.json`.
+- Philosophically, we'd like to preserve as much runtime dynanism as possible. For example, maybe the theme color (status bar) varies depending on the page shown, or scroll position. Then we'd programmatically change that `meta` tag, which wouldn't be possible if we wrote a constant in `manifest.json`. You can technically inline the manifest file like so: `<link rel="manifest" href="data:application/manifest+json,${encodeURIComponent({a: b})" />`, but we don't know if various systems, e.g. Android PWA, picks this up intead of looking for the `manifest` file. Also, NextJS currently doesn't behavior well with this for some reason.
 - `manifest.json` is yet another file that's sometime not refreshed due to browser's over-aggressive caching. The fewer attributes we stuff in it, the less development & production stateless we have to deal with.
 
 However, we do need `manifest.json` for one single attribute: `start_url`, which specifies the URL to open when the webapp is opened from the home screen. This one doesn't have a `meta` tag counterpart.
