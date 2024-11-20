@@ -80,7 +80,7 @@ Essentially:
 
 ## Gotchas
 
-`rAF`'s parameter is a timestamp which differs from getting the current time with `performance.now()` ([source](https://x.com/nomsternom/status/1853687984266055983)). Use the former.
+`rAF`'s parameter is a timestamp which differs from getting the current time with `performance.now()` ([source](https://x.com/nomsternom/status/1853687984266055983)). Use the former. If not available, use `document.timeline.currentTime`. They're always the same value.
 
 Specifically for React:
 
