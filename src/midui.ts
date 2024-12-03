@@ -48,8 +48,8 @@ export function makeScheduler<K extends keyof WindowEventMap>(
 export const msPerAnimationStep = 6
 export type Spring = { pos: number; dest: number; v: number; k: number; b: number }
 // function spring(pos: number, v = 0, k = 290, b = 30): SpringConfig {
-export function spring(pos: number, dest = pos, v = 0, k = 333, b = 33): Spring {
-  return { pos, dest, v, k, b } // k = stiffness, b = damping. Try https://chenglou.me/react-motion/demos/demo5-spring-parameters-chooser/
+export function spring(position: number, destination = position, velocity = 0, stiffness = 333, damping = 33): Spring {
+  return { pos: position, dest: destination, v: velocity, k: stiffness, b: damping } // try https://chenglou.me/react-motion/demos/demo5-spring-parameters-chooser/
 }
 export function springStep(config: Spring) {
   // https://blog.maximeheckel.com/posts/the-physics-behind-spring-animations/
