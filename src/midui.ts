@@ -109,6 +109,17 @@ export function overlapInclusive(
   return x1 <= x2 + sizeX2 && x2 <= x1 + sizeX1 && y1 <= y2 + sizeY2 && y2 <= y1 + sizeY1
 }
 
+// returns the overlapped area size
+export function overlap(a: Vec4, b: Vec4): number {
+  const left = Math.max(a.x, b.x)
+  const right = Math.min(a.z, b.z)
+  const top = Math.max(a.y, b.y)
+  const bottom = Math.min(a.w, b.w)
+
+  if (right > left && bottom > top) return (right - left) * (bottom - top)
+  return 0 // no overlap
+}
+
 export function fit(ar: number, containerSizeX: number, containerSizeY: number) {
   // returns max size x that fits in the container without changing aspect ratio
   return Math.min(containerSizeX, containerSizeY * ar) // returns fitted sizeX. Get fitted sizeY with sizeX / ar
@@ -151,12 +162,48 @@ export function fract(x: number) {
 }
 
 // https://www.shadertoy.com/view/4djSRW
-export function hash11(p: number) {
+export function hash11(p: number): number {
   p = fract(p * 0.1031)
   p *= p + 33.33
   p *= p + p
   return fract(p)
 }
+
+export function hash21(p: number): Vec2 {
+  const p3x = fract(p * 0.1031)
+  const p3y = fract(p * 0.103)
+  const p3z = fract(p * 0.0973)
+
+  const dot = p3x * (p3y + 33.33) + p3y * (p3z + 33.33) + p3z * (p3x + 33.33)
+
+  const px = p3x + dot
+  const py = p3y + dot
+  const pz = p3z + dot
+
+  return {
+    x: fract((px + py) * pz),
+    y: fract((px + pz) * py),
+  }
+}
+
+export function hash31(p: number): Vec3 {
+  const p3x = fract(p * 0.1031)
+  const p3y = fract(p * 0.103)
+  const p3z = fract(p * 0.0973)
+
+  const dot = p3x * (p3y + 33.33) + p3y * (p3z + 33.33) + p3z * (p3x + 33.33)
+
+  const px = p3x + dot
+  const py = p3y + dot
+  const pz = p3z + dot
+
+  return {
+    x: fract((px + py) * pz),
+    y: fract((px + pz) * py),
+    z: fract((py + pz) * px),
+  }
+}
+
 // export function hash12(a: number, b: number) {
 //   let aa = fract(a * .1031)
 //   let bb = fract(b * .1031)
@@ -168,4 +215,16 @@ export function hash11(p: number) {
 // }
 
 // convenient types
-export type XY = { x: number; y: number }
+export type Vec2 = { x: number; y: number }
+export type Vec3 = { x: number; y: number; z: number }
+export type Vec4 = { x: number; y: number; z: number; w: number }
+
+export function vec2(x: number, y: number): Vec2 {
+  return { x, y }
+}
+export function vec3(x: number, y: number, z: number): Vec3 {
+  return { x, y, z }
+}
+export function vec4(x: number, y: number, z: number, w: number): Vec4 {
+  return { x, y, z, w }
+}
