@@ -1,5 +1,6 @@
 {
-  "name": "midui",
+  "name": "martian-ui",
+  "version": "0.0.0",
   "module": "index.ts",
   "type": "module",
   "scripts": {
