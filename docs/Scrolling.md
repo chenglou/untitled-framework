@@ -1,6 +1,6 @@
 # Scrolling
 
-This doc details as much as we know about scrolling on the web, so that folks don't trip on its longstanding pitfalls when programming trying to scroll and preventing scroll.
+This doc details as much as we know about scrolling on the web, so that folks don't trip on its longstanding pitfalls when trying to programmatically scroll and preventing scroll.
 
 ## Scroll Rubberbanding (Elastic Bounceback)
 
@@ -19,9 +19,9 @@ Safari and Firefox (nowadays) both do rubberbanding on page and container scroll
 5. Scroll event's source can be: user scroll, dragging the scroll bar, pressing space/up/down, dragging in an item and auto scrolling, tabbing, programmatic, etc. There's no way to disambiguate them; if e.g. you're scrolling programmatically, you can set a state like `programmaticScroll = true`, call `scrollTo`, then in the scroll event check `programmaticScroll`. But this doesn't mean a native user scroll didn't happen!
 6. Careful that the max `scrollTop` value, on some platform UIs, is influenced by, say, the presence of a horizontal scrollbar, since that might or might not take permanent space.
 
-\* In fact, on certain platforms, such as macOS and iOS, JavaScript's execution is capped to 60fps (lower in certain cases, e.g. after some touches, low battery mode, etc.) while native scrolling happens at potentially 120fps, on GPU. So by the time JS reads that `scrollTop`, it might be way late.
+\* In fact, on certain platforms, such as macOS and iOS, JavaScript's execution is capped to 60fps (lower in certain cases, e.g. after some touches, low battery mode, etc.) while native scrolling happens at potentially 120fps, on GPU. So by the time JS reads that `scrollTop`, it might be way late. This means many things: you can't reliably prevent position-based scrolling in JS, can't reliably sync up other items' position with scroll position in JS, etc.
 
-\*\* This means preferrably, only _read_ `scrollTop` and don't use it to set a new scroll position. This is almost unavoidable for scroll anchoring, as you'd need the current scrollTop, the delta to adjust, then do `scrollTo({top: scrollTop + delta})`. Notice that if `delta` is some floating point, you'll end up with some anchor jitter if the user resizes browser smoothly/continuously, as the final scroll value is truncated and would keep jitter. E.g. continuously resizing might nudge the anchor lower and lower.
+\*\* This means preferrably, only _read_ `scrollTop` and don't use it to set a new scroll position. This is almost unavoidable for scroll anchoring, as you'd need the current `scrollTop`, the delta to adjust, then do `scrollTo({top: scrollTop + delta})`. Notice that if `delta` is some floating point, you'll end up with some anchor jitter if the user resizes browser smoothly/continuously, as the final scroll value is truncated and would keep jitter. E.g. continuously resizing might nudge the anchor lower and lower.
 
 ## Other Considerations
 
