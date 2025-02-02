@@ -13,6 +13,7 @@
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": true,
     "noEmit": true,
+    "allowArbitraryExtensions": true,
 
     // turned on all useful type checking options and none of the nitpicky ones. If a rule isn't here, it's deemed unnecessary
     "strict": true,
