@@ -28,6 +28,14 @@ Note that `start_url` and `display`\*, contrary to most others attributes, are o
 
 \* This applies to `name` too (and its `meta` counterpart `apple-mobile-web-app-title` and `mobile-web-app-title`).
 
+## Icon
+
+iOS doesn't support manifest icons for home screen usage. Use this instead:
+
+```html
+<link rel="apple-touch-icon" sizes="180x180" href="/path/to/your-apple-icon.png" />
+```
+
 ## Status Bar (Section Under Construction)
 
 `<meta name="theme-color" content="rgbColorHere">`. Works only in "standalone" display mode.
