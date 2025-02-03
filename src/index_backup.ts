@@ -1,4 +1,4 @@
-import { center, makeScheduler } from './martian'
+import { center, hash11, makeScheduler } from './martian'
 import { Spring, spring, springGoToEnd, springStep } from './martian/spring'
 
 // === constant layout metrics. The rest is dynamic
@@ -38,14 +38,12 @@ const state: State = {
   const windowSizeX = document.documentElement.clientWidth // excludes scroll bar & invariant under safari pinch zoom
   for (let i = 0; i < 5; i++) {
     const node = document.createElement('div')
-    const sizeY = 30 + Math.random() * 150 // [30, 180)
+    const sizeY = 50 + hash11(i) * 150 // Deterministic size, Range: [50, 200)
     node.className = 'row'
     node.innerHTML = 'Drag Me ' + i
     node.style.width = `${rowSizeX}px`
     node.style.height = `${sizeY}px`
-    const rand = Math.random() * 40 + 40 // Range: [40, 80]
-    node.style.outline = `1px solid hsl(205, 100%, ${rand}%)` // blue hue
-    node.style.backgroundColor = `hsl(205, 100%, ${rand + 10}%)` // lighter blue hue
+    node.style.backgroundColor = `hsl(205, 100%, ${90 - i * 5}%)` // lighter blue hue
     const centerX = center(rowSizeX, windowSizeX)
     state.data.push({
       id: i, // gonna drag rows around so we can't refer to a row by index. Assign a stable id
