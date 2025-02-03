@@ -174,13 +174,12 @@ const scheduleRender = makeScheduler(
     for (let i = 0; i < state.data.length; i++) {
       const d = state.data[i]!
       const style = d.node.style
-      style.transform = `translate3d(${d.x.pos}px,${d.y.pos}px,0) scale(${d.scale.pos})`
-      const zIndex =
-        newDragged && d.id === newDragged.id ? state.data.length + 2
-        : state.lastDragged && d.id === state.lastDragged.id ?
-          state.data.length + 1 // last dragged and released row still needs to animate into place; keep its z-index high
-        : i
+
+      // the visual scaling up is to simulate that the item is getting closer to us. They should therefore have a higher z-index
+      const zIndex = Math.floor(d.scale.pos * 100) // [1, 1.1] -> [100, 110]
       style.zIndex = `${zIndex}`
+
+      style.transform = `translate3d(${d.x.pos}px,${d.y.pos}px,0) scale(${d.scale.pos})`
       if (newDragged && d.id === newDragged.id) {
         style.boxShadow = 'rgba(0, 0, 0, 0.2) 0px 16px 32px 0px'
         style.opacity = '0.7'
