@@ -131,16 +131,16 @@ const scheduleRender = makeScheduler(
       d.y.pos = d.y.dest = y
       d.scale.dest = 1.1
       // dragging row upward? Swap it with previous row if cursor is above midpoint of previous row
-      while (dragIdx > 0 && pointerLast.y < state.data[dragIdx - 1].y.dest + state.data[dragIdx - 1].sizeY / 2) {
-        ;[state.data[dragIdx], state.data[dragIdx - 1]] = [state.data[dragIdx - 1], state.data[dragIdx]] // swap
+      while (dragIdx > 0 && pointerLast.y < state.data[dragIdx - 1]!.y.dest + state.data[dragIdx - 1]!.sizeY / 2) {
+        ;[state.data[dragIdx], state.data[dragIdx - 1]] = [state.data[dragIdx - 1]!, state.data[dragIdx]!] // swap
         dragIdx--
       }
       // dragging row downward? Swap it with next row if cursor is below midpoint of next row
       while (
         dragIdx < state.data.length - 1 &&
-        pointerLast.y > state.data[dragIdx + 1].y.dest + state.data[dragIdx + 1].sizeY / 2
+        pointerLast.y > state.data[dragIdx + 1]!.y.dest + state.data[dragIdx + 1]!.sizeY / 2
       ) {
-        ;[state.data[dragIdx], state.data[dragIdx + 1]] = [state.data[dragIdx + 1], state.data[dragIdx]] // swap
+        ;[state.data[dragIdx], state.data[dragIdx + 1]] = [state.data[dragIdx + 1]!, state.data[dragIdx]!] // swap
         dragIdx++
       }
     }

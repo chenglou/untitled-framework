@@ -1,16 +1,16 @@
 import app from './index.html'
 
-const manifest = JSON.stringify({
-  start_url: '/',
-  display: 'standalone',
-  name: 'fack',
-})
+// const manifest = JSON.stringify({
+//   start_url: '/',
+//   display: 'standalone',
+//   name: 'martian-ui',
+// })
 
-const manifestHTML = `
-<link rel="manifest" href="data:application/manifest+json,${encodeURIComponent(manifest)}">
-`
+// const manifestHTML = `
+// <link rel="manifest" href="data:application/manifest+json,${encodeURIComponent(manifest)}">
+// `
 
-const projectRoot = `${import.meta.dir}/..`
+// const projectRoot = `${import.meta.dir}/..`
 
 const server = Bun.serve({
   port: 8888,
