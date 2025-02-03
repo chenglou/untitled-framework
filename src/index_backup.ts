@@ -1,25 +1,36 @@
 import { center, makeScheduler } from './martian'
-import { spring, springGoToEnd, springStep } from './martian/spring'
+import { Spring, spring, springGoToEnd, springStep } from './martian/spring'
 
 // === constant layout metrics. The rest is dynamic
 const rowSizeX = 320
 const windowPaddingTop = 50
 
+type PointerPoint = { x: number; y: number; time: number }
+type DraggedInfo = { id: string; deltaX: number; deltaY: number } | null
+type DataItem = {
+  id: string
+  sizeY: number
+  x: Spring
+  y: Spring
+  scale: Spring
+  node: HTMLElement
+}
+
+type State = {
+  dragged: DraggedInfo
+  lastDragged: DraggedInfo
+  pointerState: 'down' | 'up' | 'firstDown'
+  pointer: PointerPoint[]
+  data: DataItem[]
+}
+
 // === single giant state object. It's a fine pattern especially when LLMs can help refactor nowadays
-const state = {
+const state: State = {
   dragged: null,
   lastDragged: null,
-  /** @type 'down' | 'up' | 'firstDown' */
   pointerState: 'up',
   pointer: [{ x: 0, y: 0, time: 0 }], // circular buffer. On page load, there's no way to render a first cursor state =(
-  data: [] as {
-    id: string
-    sizeY: number
-    x: { pos: number; dest: number; v?: number }
-    y: { pos: number; dest: number; v?: number }
-    scale: { pos: number; dest: number }
-    node: HTMLElement
-  }[],
+  data: [],
 }
 
 // === initialize data
@@ -46,7 +57,7 @@ const state = {
     document.body.appendChild(node)
   }
 }
-function springForEach(f: (s: { pos: number; dest: number; v?: number }) => void) {
+function springForEach(f: (s: Spring) => void) {
   for (let d of state.data) {
     f(d.x)
     f(d.y)
@@ -55,7 +66,7 @@ function springForEach(f: (s: { pos: number; dest: number; v?: number }) => void
 }
 
 // === hit testing logic. Boxes' hit area should be static and not follow their current animated state usually (but we can do either). Use the dynamic area here for once
-function hitTest(data: typeof state.data, pointer: { x: number; y: number; time: number }) {
+function hitTest(data: DataItem[], pointer: PointerPoint) {
   for (let d of data) {
     let { x, y, sizeY } = d
     if (x.pos <= pointer.x && pointer.x < x.pos + rowSizeX && y.pos <= pointer.y && pointer.y < y.pos + sizeY) return d // pointer on this box
@@ -91,7 +102,7 @@ const scheduleRender = makeScheduler(
     const pointerLast = state.pointer.at(-1)! // guaranteed non-null since pointer.length >= 1
 
     // === step 2: handle inputs-related state change
-    let newDragged: typeof state.dragged | null = null
+    let newDragged: DraggedInfo | null = null
     if (state.pointerState === 'down') newDragged = state.dragged
     else if (state.pointerState === 'up') {
       if (state.dragged != null) {
@@ -101,8 +112,8 @@ const scheduleRender = makeScheduler(
         let deltaTime = now - state.pointer[i].time
         let vx = ((pointerLast.x - state.pointer[i].x) / deltaTime) * 1000 // speed over ~1s
         let vy = ((pointerLast.y - state.pointer[i].y) / deltaTime) * 1000
-        state.data[dragIdx].x.v! += vx
-        state.data[dragIdx].y.v! += vy
+        state.data[dragIdx].x.v += vx
+        state.data[dragIdx].y.v += vy
       }
       newDragged = null
     } else {
@@ -155,7 +166,7 @@ const scheduleRender = makeScheduler(
     let stillAnimating = false
     springForEach((s) => {
       for (let i = 0; i < animationSteps; i++) springStep(s)
-      if (Math.abs(s.v!) < 0.01 && Math.abs(s.dest - s.pos) < 0.01)
+      if (Math.abs(s.v) < 0.01 && Math.abs(s.dest - s.pos) < 0.01)
         springGoToEnd(s) // close enough, we're done
       else stillAnimating = true
     })
