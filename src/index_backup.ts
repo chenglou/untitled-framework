@@ -6,9 +6,9 @@ const rowSizeX = 320
 const windowPaddingTop = 50
 
 type PointerPoint = { x: number; y: number; time: number }
-type DraggedInfo = { id: string; deltaX: number; deltaY: number } | null
+type DraggedInfo = { id: number; deltaX: number; deltaY: number } | null
 type DataItem = {
-  id: string
+  id: number
   sizeY: number
   x: Spring
   y: Spring
@@ -41,13 +41,13 @@ const state: State = {
     const sizeY = 30 + Math.random() * 150 // [30, 180)
     node.className = 'row'
     node.innerHTML = 'Drag Me ' + i
-    node.style.width = rowSizeX + 'px'
-    node.style.height = sizeY + 'px'
+    node.style.width = `${rowSizeX}px`
+    node.style.height = `${sizeY}px`
     const rand = Math.random() * 40 + 40 // Range: [40, 80]
     node.style.outline = `1px solid hsl(205, 100%, ${rand}%)` // blue hue
     node.style.backgroundColor = `hsl(205, 100%, ${rand + 10}%)` // lighter blue hue
     state.data.push({
-      id: i + '', // gonna drag rows around so we can't refer to a row by index. Assign a stable id
+      id: i, // gonna drag rows around so we can't refer to a row by index. Assign a stable id
       sizeY,
       x: spring(center(rowSizeX, windowSizeX)),
       y: spring(0),
@@ -125,7 +125,7 @@ const scheduleRender = makeScheduler(
     if (newDragged) {
       // first, swap row based on cursor position if needed
       let dragIdx = state.data.findIndex((d) => d.id === newDragged.id) // guaranteed non-null
-      let d = state.data[dragIdx]
+      let d = state.data[dragIdx]!
       const x = pointerLast.x - newDragged.deltaX
       const y = pointerLast.y - newDragged.deltaY
       d.x.pos = d.x.dest = x + (center(rowSizeX, windowSizeX) - x) / 1.5 // restrict horizontal drag a bit
@@ -173,14 +173,15 @@ const scheduleRender = makeScheduler(
 
     // === step 5: render. Batch DOM writes
     for (let i = 0; i < state.data.length; i++) {
-      let d = state.data[i],
-        style = d.node.style
+      let d = state.data[i]!
+      let style = d.node.style
       style.transform = `translate3d(${d.x.pos}px,${d.y.pos}px,0) scale(${d.scale.pos})`
-      style.zIndex =
+      const zIndex =
         newDragged && d.id === newDragged.id ? state.data.length + 2
         : state.lastDragged && d.id === state.lastDragged.id ?
           state.data.length + 1 // last dragged and released row still needs to animate into place; keep its z-index high
         : i
+      style.zIndex = `${zIndex}`
       if (newDragged && d.id === newDragged.id) {
         style.boxShadow = 'rgba(0, 0, 0, 0.2) 0px 16px 32px 0px'
         style.opacity = '0.7'
