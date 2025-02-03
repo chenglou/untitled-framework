@@ -5,13 +5,24 @@ import { spring, springGoToEnd, springStep } from './martian/spring'
 const rowSizeX = 320
 const windowPaddingTop = 50
 
-// === state
-let dragged = null
-let lastDragged = null
-/** @type 'down' | 'up' | 'firstDown' */
-let pointerState = 'up'
-let pointer = [{ x: 0, y: 0, time: 0 }] // circular buffer. Btw, on page load, there's no way to render a first cursor state =(
-let data = []
+// === single giant state object. It's a fine pattern especially when LLMs can help refactor nowadays
+const state = {
+  dragged: null,
+  lastDragged: null,
+  /** @type 'down' | 'up' | 'firstDown' */
+  pointerState: 'up',
+  pointer: [{ x: 0, y: 0, time: 0 }], // circular buffer. On page load, there's no way to render a first cursor state =(
+  data: [] as {
+    id: string
+    sizeY: number
+    x: { pos: number; dest: number; v?: number }
+    y: { pos: number; dest: number; v?: number }
+    scale: { pos: number; dest: number }
+    node: HTMLElement
+  }[],
+}
+
+// === initialize data
 {
   const windowSizeX = document.documentElement.clientWidth // excludes scroll bar & invariant under safari pinch zoom
   for (let i = 0; i < 5; i++) {
@@ -19,12 +30,12 @@ let data = []
     const sizeY = 30 + Math.random() * 150 // [30, 180)
     node.className = 'row'
     node.innerHTML = 'Drag Me ' + i
-    node.style.width = rowSizeX
-    node.style.height = sizeY
+    node.style.width = rowSizeX + 'px'
+    node.style.height = sizeY + 'px'
     const rand = Math.random() * 40 + 40 // Range: [40, 80]
     node.style.outline = `1px solid hsl(205, 100%, ${rand}%)` // blue hue
     node.style.backgroundColor = `hsl(205, 100%, ${rand + 10}%)` // lighter blue hue
-    data.push({
+    state.data.push({
       id: i + '', // gonna drag rows around so we can't refer to a row by index. Assign a stable id
       sizeY,
       x: spring(center(rowSizeX, windowSizeX)),
@@ -35,16 +46,16 @@ let data = []
     document.body.appendChild(node)
   }
 }
-function springForEach(f) {
-  for (let d of data) {
+function springForEach(f: (s: { pos: number; dest: number; v?: number }) => void) {
+  for (let d of state.data) {
     f(d.x)
     f(d.y)
-    f(d.scale) // no different than [a, b, c].forEach(f)
+    f(d.scale)
   }
 }
 
 // === hit testing logic. Boxes' hit area should be static and not follow their current animated state usually (but we can do either). Use the dynamic area here for once
-function hitTest(data, pointer) {
+function hitTest(data: typeof state.data, pointer: { x: number; y: number; time: number }) {
   for (let d of data) {
     let { x, y, sizeY } = d
     if (x.pos <= pointer.x && pointer.x < x.pos + rowSizeX && y.pos <= pointer.y && pointer.y < y.pos + sizeY) return d // pointer on this box
@@ -57,74 +68,76 @@ const scheduleRender = makeScheduler(
   (now, events, animationSteps) => {
     // === step 0: process events
     // mouseup/touchend
-    if (events.mouseup || events.touchend) pointerState = 'up'
     // move
     // when scrolling (which might schedule a render), a container's pointermove doesn't trigger, so the pointer's local coordinates are stale
     // this means we should only use pointer's global coordinates, which is always right
+    if (events.mouseup || events.touchend) state.pointerState = 'up'
     if (events.mousemove)
-      pointer.push({ x: events.mousemove.pageX, y: events.mousemove.pageY, time: performance.now() })
+      state.pointer.push({ x: events.mousemove.pageX, y: events.mousemove.pageY, time: performance.now() })
     if (events.touchmove)
-      pointer.push({
-        x: events.touchmove.touches[0].pageX,
-        y: events.touchmove.touches[0].pageY,
+      state.pointer.push({
+        x: events.touchmove.touches[0]!.pageX,
+        y: events.touchmove.touches[0]!.pageY,
         time: performance.now(),
       })
     // down
     if (events.pointerdown) {
-      pointerState = 'firstDown'
-      pointer.push({ x: events.pointerdown.pageX, y: events.pointerdown.pageY, time: performance.now() })
+      state.pointerState = 'firstDown'
+      state.pointer.push({ x: events.pointerdown.pageX, y: events.pointerdown.pageY, time: performance.now() })
     }
 
     // === step 1: batched DOM reads (to avoid accidental DOM read & write interleaving)
     const windowSizeX = document.documentElement.clientWidth // excludes scroll bar & invariant under safari pinch zoom
-    const pointerLast = pointer.at(-1) // guaranteed non-null since pointer.length >= 1
+    const pointerLast = state.pointer.at(-1)! // guaranteed non-null since pointer.length >= 1
 
     // === step 2: handle inputs-related state change
-    let newDragged
-    let releaseVelocity = null
-    if (pointerState === 'down') newDragged = dragged
-    else if (pointerState === 'up') {
-      if (dragged != null) {
-        let dragIdx = data.findIndex((d) => d.id === dragged.id)
-        let i = pointer.length - 1
-        while (i >= 0 && now - pointer[i].time <= 100) i-- // only consider last ~100ms of movements
-        let deltaTime = now - pointer[i].time
-        let vx = ((pointerLast.x - pointer[i].x) / deltaTime) * 1000 // speed over ~1s
-        let vy = ((pointerLast.y - pointer[i].y) / deltaTime) * 1000
-        data[dragIdx].x.v += vx
-        data[dragIdx].y.v += vy
+    let newDragged: typeof state.dragged | null = null
+    if (state.pointerState === 'down') newDragged = state.dragged
+    else if (state.pointerState === 'up') {
+      if (state.dragged != null) {
+        let dragIdx = state.data.findIndex((d) => d.id === state.dragged!.id)
+        let i = state.pointer.length - 1
+        while (i >= 0 && now - state.pointer[i].time <= 100) i-- // only consider last ~100ms of movements
+        let deltaTime = now - state.pointer[i].time
+        let vx = ((pointerLast.x - state.pointer[i].x) / deltaTime) * 1000 // speed over ~1s
+        let vy = ((pointerLast.y - state.pointer[i].y) / deltaTime) * 1000
+        state.data[dragIdx].x.v! += vx
+        state.data[dragIdx].y.v! += vy
       }
       newDragged = null
     } else {
-      const hit = hitTest(data, pointerLast)
+      const hit = hitTest(state.data, pointerLast)
       if (hit) newDragged = { id: hit.id, deltaX: pointerLast.x - hit.x.pos, deltaY: pointerLast.y - hit.y.pos }
     }
 
     // === step 3: calculate new layout & cursor
     if (newDragged) {
       // first, swap row based on cursor position if needed
-      let dragIdx = data.findIndex((d) => d.id === newDragged.id) // guaranteed non-null
-      let d = data[dragIdx]
+      let dragIdx = state.data.findIndex((d) => d.id === newDragged.id) // guaranteed non-null
+      let d = state.data[dragIdx]
       const x = pointerLast.x - newDragged.deltaX
       const y = pointerLast.y - newDragged.deltaY
       d.x.pos = d.x.dest = x + (center(rowSizeX, windowSizeX) - x) / 1.5 // restrict horizontal drag a bit
       d.y.pos = d.y.dest = y
       d.scale.dest = 1.1
-      // dragging row upward? Swap it with previous row if cursor is above the first half previous row
-      while (dragIdx > 0 && pointerLast.y < data[dragIdx - 1].y.dest + data[dragIdx - 1].sizeY / 2) {
-        ;[data[dragIdx], data[dragIdx - 1]] = [data[dragIdx - 1], data[dragIdx]] // swap
+      // dragging row upward? Swap it with previous row if cursor is above midpoint of previous row
+      while (dragIdx > 0 && pointerLast.y < state.data[dragIdx - 1].y.dest + state.data[dragIdx - 1].sizeY / 2) {
+        ;[state.data[dragIdx], state.data[dragIdx - 1]] = [state.data[dragIdx - 1], state.data[dragIdx]] // swap
         dragIdx--
       }
-      // dragging row downward? Swap it with next row if cursor is below the first half next row
-      while (dragIdx < data.length - 1 && pointerLast.y > data[dragIdx + 1].y.dest + data[dragIdx + 1].sizeY / 2) {
-        ;[data[dragIdx], data[dragIdx + 1]] = [data[dragIdx + 1], data[dragIdx]] // swap
+      // dragging row downward? Swap it with next row if cursor is below midpoint of next row
+      while (
+        dragIdx < state.data.length - 1 &&
+        pointerLast.y > state.data[dragIdx + 1].y.dest + state.data[dragIdx + 1].sizeY / 2
+      ) {
+        ;[state.data[dragIdx], state.data[dragIdx + 1]] = [state.data[dragIdx + 1], state.data[dragIdx]] // swap
         dragIdx++
       }
     }
     let top = windowPaddingTop
-    for (let d of data) {
+    for (let d of state.data) {
       if (newDragged && d.id === newDragged.id) {
-        // already modified above
+        // already modified above for the dragged element
       } else {
         d.x.dest = center(rowSizeX, windowSizeX)
         d.y.dest = top
@@ -134,45 +147,45 @@ const scheduleRender = makeScheduler(
     }
     const cursor =
       newDragged ?
-        'grabbing' // will be "grabbing" even if cursor isn't on the card! Try dragging to left/right extremes
-      : hitTest(data, pointerLast) ? 'grab'
+        'grabbing' // will be "grabbing" even if pointer leaves the card
+      : hitTest(state.data, pointerLast) ? 'grab'
       : 'auto'
 
     // === step 4: run animation
     let stillAnimating = false
     springForEach((s) => {
       for (let i = 0; i < animationSteps; i++) springStep(s)
-      if (Math.abs(s.v) < 0.01 && Math.abs(s.dest - s.pos) < 0.01)
-        springGoToEnd(s) // close enough, done
+      if (Math.abs(s.v!) < 0.01 && Math.abs(s.dest - s.pos) < 0.01)
+        springGoToEnd(s) // close enough, we're done
       else stillAnimating = true
     })
 
     // === step 5: render. Batch DOM writes
-    for (let i = 0; i < data.length; i++) {
-      let d = data[i],
+    for (let i = 0; i < state.data.length; i++) {
+      let d = state.data[i],
         style = d.node.style
       style.transform = `translate3d(${d.x.pos}px,${d.y.pos}px,0) scale(${d.scale.pos})`
       style.zIndex =
-        newDragged && d.id === newDragged.id ? data.length + 2
-        : lastDragged && d.id === lastDragged.id ?
-          data.length + 1 // last dragged and released row still needs to animate into place; keep it high
+        newDragged && d.id === newDragged.id ? state.data.length + 2
+        : state.lastDragged && d.id === state.lastDragged.id ?
+          state.data.length + 1 // last dragged and released row still needs to animate into place; keep its z-index high
         : i
       if (newDragged && d.id === newDragged.id) {
         style.boxShadow = 'rgba(0, 0, 0, 0.2) 0px 16px 32px 0px'
-        style.opacity = 0.7
+        style.opacity = '0.7'
       } else {
         style.boxShadow = 'rgba(0, 0, 0, 0.2) 0px 1px 2px 0px'
-        style.opacity = 1.0
+        style.opacity = '1.0'
       }
     }
     document.body.style.cursor = cursor
 
     // === step 6: update state & prepare for next frame
-    if (pointerState === 'firstDown') pointerState = 'down'
-    if (dragged && newDragged == null) lastDragged = dragged
-    dragged = newDragged
-    if (pointerState === 'up') pointer = [{ x: 0, y: 0, time: 0 }]
-    if (pointer.length > 20) pointer.shift() // keep last ~20
+    if (state.pointerState === 'firstDown') state.pointerState = 'down'
+    if (state.dragged && newDragged == null) state.lastDragged = state.dragged
+    state.dragged = newDragged
+    if (state.pointerState === 'up') state.pointer = [{ x: 0, y: 0, time: 0 }]
+    if (state.pointer.length > 20) state.pointer.shift() // keep only the last ~20 pointer events
 
     return stillAnimating
   },
