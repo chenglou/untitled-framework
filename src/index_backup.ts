@@ -37,7 +37,7 @@ const state: State = {
 {
   const windowSizeX = document.documentElement.clientWidth // excludes scroll bar & invariant under safari pinch zoom
   for (let i = 0; i < 5; i++) {
-    let node = document.createElement('div')
+    const node = document.createElement('div')
     const sizeY = 30 + Math.random() * 150 // [30, 180)
     node.className = 'row'
     node.innerHTML = 'Drag Me ' + i
@@ -58,7 +58,7 @@ const state: State = {
   }
 }
 function springForEach(f: (s: Spring) => void) {
-  for (let d of state.data) {
+  for (const d of state.data) {
     f(d.x)
     f(d.y)
     f(d.scale)
@@ -66,9 +66,9 @@ function springForEach(f: (s: Spring) => void) {
 }
 
 // === hit testing logic. Boxes' hit area should be static and not follow their current animated state usually (but we can do either). Use the dynamic area here for once
-function hitTest(data: DataItem[], pointer: PointerPoint) {
-  for (let d of data) {
-    let { x, y, sizeY } = d
+function hitTest(data: DataItem[], pointer: PointerPoint): DataItem | void {
+  for (const d of data) {
+    const { x, y, sizeY } = d
     if (x.pos <= pointer.x && pointer.x < x.pos + rowSizeX && y.pos <= pointer.y && pointer.y < y.pos + sizeY) return d // pointer on this box
   }
 }
@@ -91,7 +91,6 @@ const scheduleRender = makeScheduler(
         y: events.touchmove.touches[0]!.pageY,
         time: performance.now(),
       })
-    // down
     if (events.pointerdown) {
       state.pointerState = 'firstDown'
       state.pointer.push({ x: events.pointerdown.pageX, y: events.pointerdown.pageY, time: performance.now() })
@@ -106,14 +105,15 @@ const scheduleRender = makeScheduler(
     if (state.pointerState === 'down') newDragged = state.dragged
     else if (state.pointerState === 'up') {
       if (state.dragged != null) {
-        let dragIdx = state.data.findIndex((d) => d.id === state.dragged!.id)
+        const dragIdx = state.data.findIndex((d) => d.id === state.dragged!.id)
         let i = state.pointer.length - 1
-        while (i >= 0 && now - state.pointer[i].time <= 100) i-- // only consider last ~100ms of movements
-        let deltaTime = now - state.pointer[i].time
-        let vx = ((pointerLast.x - state.pointer[i].x) / deltaTime) * 1000 // speed over ~1s
-        let vy = ((pointerLast.y - state.pointer[i].y) / deltaTime) * 1000
-        state.data[dragIdx].x.v += vx
-        state.data[dragIdx].y.v += vy
+        while (i >= 0 && now - state.pointer[i]!.time <= 100) i-- // only consider last ~100ms of movements
+        const pointer = state.pointer[i]!
+        const deltaTime = now - pointer.time
+        const vx = ((pointerLast.x - pointer.x) / deltaTime) * 1000 // speed over ~1s
+        const vy = ((pointerLast.y - pointer.y) / deltaTime) * 1000
+        state.data[dragIdx]!.x.v += vx
+        state.data[dragIdx]!.y.v += vy
       }
       newDragged = null
     } else {
@@ -125,7 +125,7 @@ const scheduleRender = makeScheduler(
     if (newDragged) {
       // first, swap row based on cursor position if needed
       let dragIdx = state.data.findIndex((d) => d.id === newDragged.id) // guaranteed non-null
-      let d = state.data[dragIdx]!
+      const d = state.data[dragIdx]!
       const x = pointerLast.x - newDragged.deltaX
       const y = pointerLast.y - newDragged.deltaY
       d.x.pos = d.x.dest = x + (center(rowSizeX, windowSizeX) - x) / 1.5 // restrict horizontal drag a bit
@@ -146,7 +146,7 @@ const scheduleRender = makeScheduler(
       }
     }
     let top = windowPaddingTop
-    for (let d of state.data) {
+    for (const d of state.data) {
       if (newDragged && d.id === newDragged.id) {
         // already modified above for the dragged element
       } else {
@@ -173,8 +173,8 @@ const scheduleRender = makeScheduler(
 
     // === step 5: render. Batch DOM writes
     for (let i = 0; i < state.data.length; i++) {
-      let d = state.data[i]!
-      let style = d.node.style
+      const d = state.data[i]!
+      const style = d.node.style
       style.transform = `translate3d(${d.x.pos}px,${d.y.pos}px,0) scale(${d.scale.pos})`
       const zIndex =
         newDragged && d.id === newDragged.id ? state.data.length + 2
