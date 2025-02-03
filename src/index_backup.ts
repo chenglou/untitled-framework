@@ -46,12 +46,13 @@ const state: State = {
     const rand = Math.random() * 40 + 40 // Range: [40, 80]
     node.style.outline = `1px solid hsl(205, 100%, ${rand}%)` // blue hue
     node.style.backgroundColor = `hsl(205, 100%, ${rand + 10}%)` // lighter blue hue
+    const centerX = center(rowSizeX, windowSizeX)
     state.data.push({
       id: i, // gonna drag rows around so we can't refer to a row by index. Assign a stable id
       sizeY,
-      x: spring(center(rowSizeX, windowSizeX)),
-      y: spring(0),
-      scale: spring(1),
+      x: spring(centerX, centerX, 0, 225, 25),
+      y: spring(0, 0, 0, 225, 25),
+      scale: spring(1, 1, 0, 225, 25),
       node: node,
     })
     document.body.appendChild(node)

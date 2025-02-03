@@ -3,8 +3,9 @@
 // could use 8ms instead, but 120fps' 8.3ms/frame means the computation might not fit in the remaining 0.3ms, which means sometime the simulation step wouldn't even run once, giving the illusion of jank
 export const msPerAnimationStep = 6
 export type Spring = { pos: number; dest: number; v: number; k: number; b: number }
-// function spring(pos: number, v = 0, k = 290, b = 30): SpringConfig {
-export function spring(position: number, destination = position, velocity = 0, stiffness = 333, damping = 33): Spring {
+
+export function spring(position: number, destination = position, velocity = 0, stiffness = 225, damping = 30): Spring {
+  // we default to a critical damping spring, aka damping = 2* sqrt(stiffness) per the physics
   return { pos: position, dest: destination, v: velocity, k: stiffness, b: damping } // try https://chenglou.me/react-motion/demos/demo5-spring-parameters-chooser/
 }
 export function springStep(config: Spring) {
