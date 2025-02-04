@@ -104,6 +104,7 @@ const scheduleRender = makeScheduler(
     if (state.pointerState === 'down') newDragged = state.dragged
     else if (state.pointerState === 'up') {
       if (state.dragged != null) {
+        // if we just dragged & released an item, give it a bit of flick velocity based on how fast we swiped it away
         const dragIdx = state.data.findIndex((d) => d.id === state.dragged!.id)
         let i = state.pointer.length - 1
         while (i >= 0 && now - state.pointer[i]!.time <= 100) i-- // only consider last ~100ms of movements
