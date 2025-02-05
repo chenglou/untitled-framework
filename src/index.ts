@@ -137,17 +137,16 @@ function render(now: number, animationSteps: number): boolean {
   // when scrolling (which might schedule a render), a container's pointermove doesn't trigger, so the pointer's local coordinates are stale
   // this means we should only use pointer's global coordinates, which is always right
   if (events.mouseup || events.touchend) state.pointerState = 'up'
-  if (events.mousemove)
-    state.pointer.push({ x: events.mousemove.pageX, y: events.mousemove.pageY, time: performance.now() })
-  if (events.touchmove)
-    state.pointer.push({
-      x: events.touchmove.touches[0]!.pageX,
-      y: events.touchmove.touches[0]!.pageY,
-      time: performance.now(),
-    })
+  if (events.mousemove) {
+    state.pointer.push({ x: events.mousemove.pageX, y: events.mousemove.pageY, time: events.mousemove.timeStamp })
+  }
+  if (events.touchmove) {
+    const touch = events.touchmove.touches[0]!
+    state.pointer.push({ x: touch.pageX, y: touch.pageY, time: events.touchmove.timeStamp })
+  }
   if (events.pointerdown) {
     state.pointerState = 'firstDown'
-    state.pointer.push({ x: events.pointerdown.pageX, y: events.pointerdown.pageY, time: performance.now() })
+    state.pointer.push({ x: events.pointerdown.pageX, y: events.pointerdown.pageY, time: events.pointerdown.timeStamp })
   }
 
   // === step 1: batched DOM reads (to avoid accidental DOM read & write interleaving)

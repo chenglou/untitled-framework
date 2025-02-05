@@ -58,6 +58,10 @@ Instead of handling a particular event's logic inside its event callback, we _on
 
 This colocation of disparate events costs so little that we should default to this pattern, for easier code evolution.
 
+## Timing
+
+Events contain a `timeStamp` property, the high-precision time when the event occurred. Use this over `performance.now()` and others, when relevant event-related calculations are involved.
+
 ## Touch
 
 Pointer up's slightly faster than mouseup on iOS Safari: https://x.com/_chenglou/status/1666771401729265664
