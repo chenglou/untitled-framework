@@ -161,7 +161,7 @@ function render(now: number, animationSteps: number): boolean {
       // if we just dragged & released an item, give it a bit of flick velocity based on how fast we swiped it away
       const dragIdx = state.data.findIndex((d) => d.id === state.dragged!.id)
       let i = state.pointer.length - 1
-      while (i > 0 && now - state.pointer[i]!.time <= 100) i-- // only consider last ~100ms of movements
+      while (i > 0 && now - state.pointer[i]!.time <= 500) i-- // only consider last ~500ms of movements
       const pointer = state.pointer[i]!
       const deltaTime = now - pointer.time
       // pointerLast is guaranteed non-null
@@ -254,7 +254,7 @@ function render(now: number, animationSteps: number): boolean {
   if (state.dragged && newDragged == null) state.lastDragged = state.dragged
   state.dragged = newDragged
   if (state.pointerState === 'up') state.pointer = []
-  if (state.pointer.length > 20) state.pointer.shift() // keep only the last ~20 pointer events
+  if (state.pointer.length > 100) state.pointer.shift() // keep only the last ~100 pointer events
 
   return stillAnimating
 }
