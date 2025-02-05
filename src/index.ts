@@ -29,7 +29,7 @@ const state: State = {
   dragged: null,
   lastDragged: null,
   pointerState: 'up',
-  pointer: [{ x: 0, y: 0, time: 0 }], // circular buffer. On page load, there's no way to render a first cursor state =(
+  pointer: [], // circular buffer
   data: [],
 }
 {
@@ -151,7 +151,7 @@ function render(now: number, animationSteps: number): boolean {
 
   // === step 1: batched DOM reads (to avoid accidental DOM read & write interleaving)
   const windowSizeX = document.documentElement.clientWidth // excludes scroll bar & invariant under safari pinch zoom
-  const pointerLast = state.pointer.at(-1)! // guaranteed non-null since pointer.length >= 1
+  const pointerLast = state.pointer.at(-1)
 
   // === step 2: handle inputs-related state change
   let newDragged: DraggedInfo | null = null
@@ -161,22 +161,23 @@ function render(now: number, animationSteps: number): boolean {
       // if we just dragged & released an item, give it a bit of flick velocity based on how fast we swiped it away
       const dragIdx = state.data.findIndex((d) => d.id === state.dragged!.id)
       let i = state.pointer.length - 1
-      while (i >= 0 && now - state.pointer[i]!.time <= 100) i-- // only consider last ~100ms of movements
+      while (i > 0 && now - state.pointer[i]!.time <= 100) i-- // only consider last ~100ms of movements
       const pointer = state.pointer[i]!
       const deltaTime = now - pointer.time
-      const vx = ((pointerLast.x - pointer.x) / deltaTime) * 1000 // speed over ~1s
-      const vy = ((pointerLast.y - pointer.y) / deltaTime) * 1000
+      // pointerLast is guaranteed non-null
+      const vx = ((pointerLast!.x - pointer.x) / deltaTime) * 1000 // speed over ~1s
+      const vy = ((pointerLast!.y - pointer.y) / deltaTime) * 1000
       state.data[dragIdx]!.x.v += vx
       state.data[dragIdx]!.y.v += vy
     }
     newDragged = null
-  } else {
+  } else if (pointerLast) {
     const hit = hitTest(state.data, pointerLast)
     if (hit) newDragged = { id: hit.id, deltaX: pointerLast.x - hit.x.pos, deltaY: pointerLast.y - hit.y.pos }
   }
 
   // === step 3: calculate new layout & cursor
-  if (newDragged) {
+  if (newDragged && pointerLast) {
     // first, swap row based on cursor position if needed
     let dragIdx = state.data.findIndex((d) => d.id === newDragged.id) // guaranteed non-null
     const d = state.data[dragIdx]!
@@ -213,7 +214,7 @@ function render(now: number, animationSteps: number): boolean {
   const cursor =
     newDragged ?
       'grabbing' // will be "grabbing" even if pointer leaves the card
-    : hitTest(state.data, pointerLast) ? 'grab'
+    : pointerLast && hitTest(state.data, pointerLast) ? 'grab'
     : 'auto'
 
   // === step 4: run animation
@@ -252,7 +253,7 @@ function render(now: number, animationSteps: number): boolean {
   if (state.pointerState === 'firstDown') state.pointerState = 'down'
   if (state.dragged && newDragged == null) state.lastDragged = state.dragged
   state.dragged = newDragged
-  if (state.pointerState === 'up') state.pointer = [{ x: 0, y: 0, time: 0 }]
+  if (state.pointerState === 'up') state.pointer = []
   if (state.pointer.length > 20) state.pointer.shift() // keep only the last ~20 pointer events
 
   return stillAnimating
