@@ -231,8 +231,11 @@ function render(now: number, animationSteps: number): boolean {
     const d = state.data[i]!
     const style = d.node.style
 
-    // the visual scaling up is to simulate that the item is getting closer to us. They should therefore have a higher z-index
-    const zIndex = Math.floor(d.scale.pos * 100) // [1, 1.1] -> [100, 110]
+    const zIndex =
+      d.scale.pos > 1 ?
+        // the visual scaling up is to simulate that the item is getting closer to us. They should therefore have a higher z-index than any other item at rest (scale = 1)
+        state.data.length + Math.floor(d.scale.pos * 100) // base z is higher than all other item, + scale, mapped from [1, 1.1] to [100, 110]
+      : i // otherwise, just use the index. Array order is already the visual y order
     style.zIndex = `${zIndex}`
 
     style.transform = `translate3d(${d.x.pos}px,${d.y.pos}px,0) scale(${d.scale.pos})`
