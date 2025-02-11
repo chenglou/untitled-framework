@@ -49,6 +49,7 @@ export default [
 
       "@typescript-eslint/switch-exhaustiveness-check": ["error", {
         allowDefaultCaseForExhaustiveSwitch: false, // there's no reason this should be necessary. If there's truly a default case, then fix the type definition of the value being switched on
+        considerDefaultExhaustiveForUnions: true,
         requireDefaultForNonUnion: true,
       }],
 
